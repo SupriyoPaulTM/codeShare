@@ -1,0 +1,67 @@
+// Pin definitions
+const int LDR_PIN = A0;       // LDR connected to analog pin A0
+const int LED_PIN = 9;        // Red LED connected to digital pin 9
+const int BUZZER_PIN = 10;    // Buzzer connected to digital pin 10
+const int BUTTON_PIN = 8;     // Button connected to digital pin 8
+
+// Threshold for light detection
+const int LIGHT_THRESHOLD = 500; // Adjust based on your environment
+
+// State variables
+bool alarmTriggered = false;
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);       // Set LED pin as output
+  pinMode(BUZZER_PIN, OUTPUT);    // Set Buzzer pin as output
+  pinMode(BUTTON_PIN, INPUT_PULLUP); // Use internal pull-up resistor for button
+
+  Serial.begin(9600); // For debugging
+}
+
+void loop() {
+  int lightLevel = analogRead(LDR_PIN); // Read the LDR value
+  Serial.println(lightLevel);          // Debugging: Print LDR value
+
+  // Check light level and trigger alarm if below threshold
+  if (lightLevel < LIGHT_THRESHOLD && !alarmTriggered) {
+    triggerAlarm();
+  }
+
+  // Check if button is pressed to reset the alarm
+  if (isButtonPressed() && alarmTriggered) {
+    resetAlarm();
+  }
+}
+
+void triggerAlarm() {
+  alarmTriggered = true;         // Set alarm state
+  digitalWrite(LED_PIN, HIGH);   // Turn on LED
+  digitalWrite(BUZZER_PIN, HIGH); // Turn on buzzer
+}
+
+void resetAlarm() {
+  alarmTriggered = false;        // Reset alarm state
+  digitalWrite(LED_PIN, LOW);    // Turn off LED
+  digitalWrite(BUZZER_PIN, LOW); // Turn off buzzer
+}
+
+// Debounce function for the button
+bool isButtonPressed() {
+  static unsigned long lastDebounceTime = 0;
+  static bool lastButtonState = HIGH;
+
+  bool currentButtonState = digitalRead(BUTTON_PIN);
+  if (currentButtonState != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > 50) { // 50ms debounce time
+    if (currentButtonState == LOW) { // Button pressed
+      lastButtonState = currentButtonState;
+      return true;
+    }
+  }
+
+  lastButtonState = currentButtonState;
+  return false;
+}
